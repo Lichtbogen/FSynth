@@ -15,7 +15,7 @@ DFLAGS = -DDEBUG -g
 OFLAGS = -O3 -s
 
 ## Object file list
-OBJ = main.o samples.o 
+OBJ = main.o samples.o wavefmt.o 
 
 all: $(NAME)
 
@@ -33,6 +33,9 @@ main.o: main.c
 
 samples.o: samples.c
 	$(CC) $(CFLAGS) -c samples.c
+
+wavefmt.o: wavefmt.c
+	$(CC) $(CFLAGS) -c wavefmt.c
 
 clean:
 	rm $(OBJ)

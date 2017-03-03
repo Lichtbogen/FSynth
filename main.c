@@ -6,16 +6,16 @@
 int main(int argc, char **argv)
 {
   int idx;
-  SampleBuffer *buf = create_sample_buffer(30, 1);
-  SampleBuffer *mod = create_sample_buffer(30, 1);
-  generate_wave_func(mod, WAVE_SINE, 1.0, 0.5);
-  generate_wave_func(buf, WAVE_SINE, 2.0, 1.0);
+  SampleBuffer *buf = create_sample_buffer(44100, 1);
+  SampleBuffer *mod = create_sample_buffer(44100, 1);
+
+  generate_wave_func(buf, WAVE_SINE, 500, 1);
+  generate_wave_func(mod, WAVE_SINE, 120, .6);
   modulate_buffer(buf, mod, MOD_MULT);
   normalize_buffer(buf);
-  FOREACH_SAMPLE(buf, idx) {
-    //printf("Sample(%d): %1.3f\n", idx, buf->samples[idx]);
-    printf("%d;%1.3f\n", idx, buf->samples[idx]);
-  }
+
+  samples_to_wave_file(buf, "tone.wav", WAVE_FMT_16BIT, 1);
+
   delete_sample_buffer(&buf);
   delete_sample_buffer(&mod);
   return 0;
