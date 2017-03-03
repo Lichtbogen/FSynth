@@ -1,8 +1,8 @@
 #ifndef _FSYNTH_H_
 #define _FSYNTH_H_
 
-#define FS_OK       0
-#define FS_ERROR   -1
+#define FS_OK          0
+#define FS_ERROR      -1
 
 /* Waveform types */
 #define WAVE_SINE      1
@@ -11,9 +11,17 @@
 #define WAVE_TRIANGLE  4
 #define WAVE_RECT      5
 
-#define LERP(min, max, t) ((1 - t) * min  + t * max)
-#define FOREACH_SAMPLE(buffer) \
-  for (size_t idx = 0; idx < buffer->sample_count; ++idx)
+/* Modulation types */
+#define MOD_ADD        1
+#define MOD_SUB        2
+#define MOD_MULT       3
+#define MOD_DIV        4
+
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define LERP(min, max, t) ((1 - (t)) * (min)  + (t) * (max))
+#define FOREACH_SAMPLE(buffer, idx) \
+  for (idx = 0; idx < buffer->sample_count; ++idx)
 
 #define INVALID_BUFFER(buffer) \
   (buffer == NULL || buffer->buffer_size == 0 || buffer->sample_count == 0 || buffer->sample_rate == 0)
@@ -29,6 +37,8 @@ typedef struct {
 
 SampleBuffer *create_sample_buffer_raw(uint32_t sample_rate, size_t sample_count);
 SampleBuffer *create_sample_buffer(uint32_t sample_rate, double duration);
+int modulate_buffer(SampleBuffer *dest, SampleBuffer *src, int modulate_type);
+int normalize_buffer(SampleBuffer *buffer);
 double get_buffer_duration(SampleBuffer *buffer);
 int generate_wave_func(SampleBuffer *buffer, int func_type, double freq, double amp);
 void delete_sample_buffer(SampleBuffer **buffer);

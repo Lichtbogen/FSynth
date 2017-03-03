@@ -8,8 +8,9 @@
 NAME   = fsynth
 
 ## Compiler and flags
-CC     = g++
+CC     = gcc
 CFLAGS = -Wall
+LFLAGS = -lm
 DFLAGS = -DDEBUG -g
 OFLAGS = -O3 -s
 
@@ -25,7 +26,7 @@ release: CFLAGS += $(OFLAGS)
 release: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o fsynth
+	$(CC) $(CFLAGS) $(LFLAGS) $(OBJ) -o fsynth
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c main.c

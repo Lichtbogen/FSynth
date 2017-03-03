@@ -1,3 +1,5 @@
 {
-	"name": "fsynth"
+	"name": "fsynth",
+	"lflags": "-lm",
+	"compiler": "gcc"
 }
