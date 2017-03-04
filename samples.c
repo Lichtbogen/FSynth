@@ -151,6 +151,18 @@ int modulate_buffer(SampleBuffer *dest, SampleBuffer *src, int modulate_type)
     case MOD_DIV:
       dest->samples[idx] /= src->samples[idx];
       break;
+    case MOD_SQUARE:
+      dest->samples[idx] *= src->samples[idx] * src->samples[idx];
+      break;
+    case MOD_ROOT:
+      dest->samples[idx] *= sqrt(src->samples[idx]);
+      break;
+    case MOD_LOG:
+      dest->samples[idx] *= log(src->samples[idx]);
+      break;
+    case MOD_LOG10:
+      dest->samples[idx] *= log10(src->samples[idx]);
+      break;
     default:
       result = FS_ERROR;
       break;
