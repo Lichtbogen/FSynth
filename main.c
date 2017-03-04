@@ -10,7 +10,7 @@ int main(int argc, char **argv)
   SampleBuffer *mod = create_sample_buffer(44100, 1);
   SampleBuffer *hig = create_sample_buffer(44100, 1);
 
-  /*generate_wave_func(buf, WAVE_TRIANGLE, 500, 1);
+  /*generate_wave_func(buf, WAVE_SAW, 500, 1);
   generate_wave_func(mod, WAVE_SINE, 120, .6);
   generate_wave_func(hig, WAVE_SINE, 1000, .4);
   modulate_buffer(buf, mod, MOD_MULT);

@@ -30,7 +30,11 @@
 #define INVALID_BUFFER(buffer) \
   (buffer == NULL || buffer->buffer_size == 0 || buffer->sample_count == 0 || buffer->sample_rate == 0)
 
+#ifndef SINGLE
 typedef double sample_t;
+#else
+typedef float sample_t;
+#endif
 
 typedef struct {
   uint32_t sample_rate;

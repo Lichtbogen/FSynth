@@ -81,18 +81,18 @@ sample_t triangle(double phase)
   sample_t sample;
   double normalized = phase / (M_PI * 2.);
   if (normalized < .5) {
-    sample = LERP(0, 2., normalized);
+    sample = LERP(0, 2, normalized);
   } else {
-    sample = LERP(2., 0, normalized);
+    sample = LERP(2, 0, normalized);
   }
-  return sample;
+  return (sample - .5) * 2.;
 }
 
 sample_t saw(double phase)
 {
   sample_t sample;
   double normalized = phase / (M_PI * 2.);
-  sample = LERP(0, 1., normalized);
+  sample = LERP(-1, 1., normalized);
   return sample;
 }
 
@@ -101,7 +101,7 @@ sample_t rect(double phase)
   sample_t sample;
   double normalized = phase / (M_PI * 2.);
   if (normalized < .5) {
-    sample = 0;
+    sample = -1;
   } else {
     sample = 1;
   }
@@ -123,7 +123,9 @@ int normalize_buffer(SampleBuffer *buffer)
   assert(max_val - min_val);
   FOREACH_SAMPLE(buffer, idx) {
     x = buffer->samples[idx];
-    buffer->samples[idx] = (x - min_val) / (max_val - min_val);
+    x = (x - min_val) / (max_val - min_val);
+    x = (x - .5) * 2.;
+    buffer->samples[idx] = x;
   }
   return result;
 }
