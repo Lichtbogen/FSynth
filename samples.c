@@ -18,6 +18,52 @@ SampleBuffer *create_sample_buffer_raw(uint32_t sample_rate, size_t sample_count
   return p_buf;
 }
 
+int clear_sample_buffer(SampleBuffer *buffer)
+{
+  int result = FS_OK;
+  if (INVALID_BUFFER(buffer)) {
+    assert(0);
+    result = FS_ERROR;
+    return result;
+  }
+  memset(buffer->samples, 0, buffer->buffer_size);
+  return result;
+}
+
+SampleBuffer *cat_sample_buffers(SampleBuffer *buffer_a, SampleBuffer *buffer_b)
+{
+  SampleBuffer *pout = NULL;
+  if (!INVALID_BUFFER(buffer_a) && !INVALID_BUFFER(buffer_b)) {
+    pout = create_sample_buffer_raw(buffer_a->sample_rate, buffer_a->sample_count + buffer_b->sample_count);
+    memcpy(pout->samples, buffer_a->samples, buffer_a->buffer_size);
+    memcpy(pout->samples + buffer_a->buffer_size, buffer_b->samples, buffer_b->buffer_size);
+  }
+  return pout;
+}
+
+SampleBuffer *repeat_sample_buffer(SampleBuffer *buffer, int times)
+{
+  int i;
+  SampleBuffer *temp;
+  SampleBuffer *pout = buffer;
+  if (times > 0) {
+    pout = cat_sample_buffers(buffer, buffer);
+    for (i = 1; i < times; ++i) {
+      temp = pout;
+      pout = cat_sample_buffers(pout, buffer);
+      delete_sample_buffer(&temp);
+    }
+  }
+  return pout;
+}
+
+SampleBuffer *clone_sample_buffer(SampleBuffer *buffer)
+{
+  SampleBuffer *clone = create_sample_buffer_raw(buffer->sample_rate, buffer->sample_count);
+  memcpy(clone->samples, buffer->samples, buffer->buffer_size);
+  return clone;
+}
+
 SampleBuffer *create_sample_buffer(uint32_t sample_rate, double duration)
 {
   uint32_t sample_count = (uint32_t)(sample_rate * duration);
@@ -33,7 +79,7 @@ double get_buffer_duration(SampleBuffer *buffer)
 sample_t triangle(double phase)
 {
   sample_t sample;
-  double normalized = fmod(phase, M_PI * 2.) / (M_PI * 2.);
+  double normalized = phase / (M_PI * 2.);
   if (normalized < .5) {
     sample = LERP(0, 2., normalized);
   } else {
@@ -45,7 +91,7 @@ sample_t triangle(double phase)
 sample_t saw(double phase)
 {
   sample_t sample;
-  double normalized = fmod(phase, M_PI * 2.) / (M_PI * 2.);
+  double normalized = phase / (M_PI * 2.);
   sample = LERP(0, 1., normalized);
   return sample;
 }
@@ -53,7 +99,7 @@ sample_t saw(double phase)
 sample_t rect(double phase)
 {
   sample_t sample;
-  double normalized = fmod(phase, M_PI * 2.) / (M_PI * 2.);
+  double normalized = phase / (M_PI * 2.);
   if (normalized < .5) {
     sample = 0;
   } else {
@@ -91,24 +137,50 @@ int modulate_buffer(SampleBuffer *dest, SampleBuffer *src, int modulate_type)
   }
   FOREACH_SAMPLE(dest, idx) {
     switch (modulate_type) {
-      case MOD_ADD:
-        dest->samples[idx] += src->samples[idx];
+    case MOD_ADD:
+      dest->samples[idx] += src->samples[idx];
       break;
-      case MOD_SUB:
-        dest->samples[idx] -= src->samples[idx];
+    case MOD_SUB:
+      dest->samples[idx] -= src->samples[idx];
       break;
-      case MOD_MULT:
-        dest->samples[idx] *= src->samples[idx];
+    case MOD_MULT:
+      dest->samples[idx] *= src->samples[idx];
       break;
-      case MOD_DIV:
-        dest->samples[idx] /= src->samples[idx];
+    case MOD_DIV:
+      dest->samples[idx] /= src->samples[idx];
       break;
-      default:
-        result = FS_ERROR;
+    default:
+      result = FS_ERROR;
       break;
     }
   }
   return result;
+}
+
+int wave_func_intern(sample_t *out, int func_type, double phase, double amp)
+{
+  sample_t result = 0;
+  switch (func_type) {
+  case WAVE_SINE:
+    result = (sample_t)sin(phase) * amp;
+    break;
+  case WAVE_COSINE:
+    result = (sample_t)cos(phase) * amp;
+    break;
+  case WAVE_TRIANGLE:
+    result = triangle(phase) * amp;
+    break;
+  case WAVE_SAW:
+    result = saw(phase) * amp;
+    break;
+  case WAVE_RECT:
+    result = rect(phase) * amp;
+    break;
+  default:
+    return FS_ERROR;
+  }
+  *out = result;
+  return FS_OK;
 }
 
 int generate_wave_func(SampleBuffer *buffer, int func_type, double freq, double amp)
@@ -120,32 +192,32 @@ int generate_wave_func(SampleBuffer *buffer, int func_type, double freq, double 
     return FS_ERROR;
   }
   shift = M_PI * 2. / ((double)buffer->sample_rate / freq);
-  if (func_type == WAVE_SINE) {
-    FOREACH_SAMPLE(buffer, idx) {
-      buffer->samples[idx] = (sample_t)sin(phase) * amp;
-      phase += shift;
+  FOREACH_SAMPLE(buffer, idx) {
+    if (wave_func_intern(&buffer->samples[idx], func_type, phase, amp) != FS_OK) {
+      result = FS_ERROR;
+      break;
     }
-  } else if (func_type == WAVE_COSINE) {
-    FOREACH_SAMPLE(buffer, idx) {
-      buffer->samples[idx] = (sample_t)cos(phase) * amp;
-      phase += shift;
+    phase = fmod(phase + shift, M_PI * 2.);
+  }
+  return result;
+}
+
+int modulate_frequency(SampleBuffer *dest, SampleBuffer *source, int func_type, double amp)
+{
+  int idx, result = FS_OK;
+  double shift, phase = 0;
+  if (INVALID_BUFFER(dest) || INVALID_BUFFER(source)) {
+    assert(0);
+    return FS_ERROR;
+  }
+  FOREACH_SAMPLE(dest, idx) {
+    shift = M_PI * 2. / ((double)dest->sample_rate / source->samples[idx]);
+    if (wave_func_intern(&dest->samples[idx], func_type, phase, amp) != FS_OK) {
+      result = FS_ERROR;
+      break;
     }
-  } else if (func_type == WAVE_TRIANGLE) {
-    FOREACH_SAMPLE(buffer, idx) {
-      buffer->samples[idx] = triangle(phase) * amp;
-      phase += shift;
-    }
-  } else if (func_type == WAVE_SAW) {
-    FOREACH_SAMPLE(buffer, idx) {
-      buffer->samples[idx] = saw(phase) * amp;
-      phase += shift;
-    }
-  } else if (func_type == WAVE_RECT) {
-    FOREACH_SAMPLE(buffer, idx) {
-      buffer->samples[idx] = rect(phase) * amp;
-      phase += shift;
-    }
-  } else result = FS_ERROR;
+    phase = fmod(phase + shift, M_PI * 2.);
+  }
   return result;
 }
 
@@ -153,7 +225,7 @@ void delete_sample_buffer(SampleBuffer **buffer)
 {
   if ((*buffer)->buffer_size > 0) {
     free((*buffer)->samples);
-    free(*buffer);
-    *buffer = NULL;
   }
+  free(*buffer);
+  *buffer = NULL;
 }
