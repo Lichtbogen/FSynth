@@ -17,6 +17,11 @@ FSampleBuffer *fs_create_sample_buffer_raw(uint32_t sample_rate, size_t sample_c
   return buffer;
 }
 
+FSampleBuffer *fs_create_sample_buffer_prop(FSampleBuffer *buffer)
+{
+  return fs_create_sample_buffer_raw(buffer->sample_rate, buffer->sample_rate);
+}
+
 int fs_clear_sample_buffer(FSampleBuffer *buffer)
 {
   fs_clear_error();
@@ -49,7 +54,7 @@ FSampleBuffer *fs_repeat_sample_buffer(FSampleBuffer *buffer, int times)
   FSampleBuffer *pout = buffer;
   if (times > 0) {
     pout = fs_cat_sample_buffers(buffer, buffer);
-    for (i = 1; i < times; ++i) {
+    for (i = 1; i < times-1; ++i) {
       temp = pout;
       pout = fs_cat_sample_buffers(pout, buffer);
       fs_delete_sample_buffer(&temp);
@@ -71,12 +76,26 @@ FSampleBuffer *fs_create_sample_buffer(uint32_t sample_rate, double duration)
   return fs_create_sample_buffer_raw(sample_rate, sample_count);
 }
 
+int fs_scale_samples(FSampleBuffer *buffer, double level)
+{
+  size_t idx;
+  fs_clear_error();
+  if (INVALID_BUFFER(buffer)) {
+    fs_set_error(FS_INVLID_BUFFER);
+  } else {
+    FOREACH_SAMPLE(buffer, idx) {
+      buffer->samples[idx] *= level;
+    }
+  }
+  return fs_get_error();
+}
+
 double fs_get_buffer_duration(FSampleBuffer *buffer)
 {
   if (INVALID_BUFFER(buffer)) {
     fs_set_error(FS_INVLID_BUFFER);
   }
-  return buffer->sample_count / buffer->sample_rate;
+  return buffer->sample_count / (double)buffer->sample_rate;
 }
 
 size_t fs_get_buffer_position(FSampleBuffer *buffer, double time)
@@ -230,6 +249,9 @@ int wave_func_intern(sample_t *out, int func_type, double phase, double amp)
     break;
   case FS_WAVE_RECT:
     result = rect(phase) * amp;
+    break;
+  case FS_WAVE_NOISE:
+    result = ((rand() & 0xffff) / 65535. - .5) * 2.;
     break;
   default:
     return FS_ERROR;
