@@ -61,6 +61,8 @@ typedef struct {
   uint32_t sample_rate;
   size_t buffer_size;
   size_t sample_count;
+  size_t hull_ptr;
+  sample_t hull_level;
   sample_t *samples;
 } FSampleBuffer;
 
@@ -81,8 +83,15 @@ int fs_modulate_buffer(FSampleBuffer *dest, FSampleBuffer *src, int modulate_typ
 int fs_modulate_frequency(FSampleBuffer *dest, FSampleBuffer *source, int func_type, double amp);
 int fs_normalize_buffer(FSampleBuffer *buffer);
 double fs_get_buffer_duration(FSampleBuffer *buffer);
+size_t fs_get_buffer_position(FSampleBuffer *buffer, double time);
+double fs_get_time_position(FSampleBuffer *buffer, size_t pos);
 int fs_generate_wave_func(FSampleBuffer *buffer, int func_type, double freq, double amp);
 void fs_delete_sample_buffer(FSampleBuffer **buffer);
+
+/* Hull curves */
+int fs_attack_decay(FSampleBuffer *buffer, double time, double level);
+int fs_sustain(FSampleBuffer *buffer, double time);
+int fs_release(FSampleBuffer *buffer);
 
 /* Wave file generation and sample conversion functions */
 int fs_samples_to_wave_file(FSampleBuffer *buffer, const char *fname, int format, int channels);

@@ -19,13 +19,13 @@ FSampleBuffer *fs_create_sample_buffer_raw(uint32_t sample_rate, size_t sample_c
 
 int fs_clear_sample_buffer(FSampleBuffer *buffer)
 {
-  int result = FS_OK;
+  fs_clear_error();
   if (INVALID_BUFFER(buffer)) {
-    result = FS_ERROR;
-    return result;
+    fs_set_error(FS_INVLID_BUFFER);
+    return fs_get_error();
   }
   memset(buffer->samples, 0, buffer->buffer_size);
-  return result;
+  return fs_get_error();
 }
 
 FSampleBuffer *fs_cat_sample_buffers(FSampleBuffer *buffer_a, FSampleBuffer *buffer_b)
@@ -35,7 +35,7 @@ FSampleBuffer *fs_cat_sample_buffers(FSampleBuffer *buffer_a, FSampleBuffer *buf
   if (!INVALID_BUFFER(buffer_a) && !INVALID_BUFFER(buffer_b)) {
     pout = fs_create_sample_buffer_raw(buffer_a->sample_rate, buffer_a->sample_count + buffer_b->sample_count);
     memcpy(pout->samples, buffer_a->samples, buffer_a->buffer_size);
-    memcpy(pout->samples + buffer_a->buffer_size, buffer_b->samples, buffer_b->buffer_size);
+    memcpy(&pout->samples[buffer_a->sample_count-1], buffer_b->samples, buffer_b->buffer_size);
   } else {
     fs_set_error(FS_INVLID_BUFFER);
   }
@@ -73,11 +73,37 @@ FSampleBuffer *fs_create_sample_buffer(uint32_t sample_rate, double duration)
 
 double fs_get_buffer_duration(FSampleBuffer *buffer)
 {
-  fs_clear_error();
   if (INVALID_BUFFER(buffer)) {
     fs_set_error(FS_INVLID_BUFFER);
   }
   return buffer->sample_count / buffer->sample_rate;
+}
+
+size_t fs_get_buffer_position(FSampleBuffer *buffer, double time)
+{
+  size_t position = 0;
+  if (INVALID_BUFFER(buffer)) {
+    fs_set_error(FS_INVLID_BUFFER);
+  } else  {
+    position = buffer->sample_rate * time;
+    position = MIN(buffer->sample_count, position);
+  }
+  return position;
+}
+
+double fs_get_time_position(FSampleBuffer *buffer, size_t pos)
+{
+  double time = 0;
+  if (INVALID_BUFFER(buffer)) {
+    fs_set_error(FS_INVLID_BUFFER);
+  } else  {
+    if (pos > buffer->sample_count) {
+      fs_set_error(FS_INVLID_OPERATION | FS_INVLID_ARGUMENT);
+    } else {
+      time = pos / (double)buffer->sample_rate;
+    }
+  }
+  return time;
 }
 
 sample_t triangle(double phase)
