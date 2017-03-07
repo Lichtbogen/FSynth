@@ -6,17 +6,18 @@
 #endif
 
 /* FSynth error codes */
-#define FS_OK                 0
-#define FS_ERROR              (1<<31)
-#define FS_WARNING            (1<<30)
-#define FS_INVLID_BUFFER      (1<<0)
-#define FS_INVLID_ARGUMENT    (1<<1)
-#define FS_INVLID_OPERATION   (1<<2)
-#define FS_DIVIDED_BY_ZERO    (1<<3)
-#define FS_FILE_IO_ERROR      (1<<4)
-#define FS_WRONG_BUF_SIZE     (1<<5)
-#define FS_DIFF_SAMPLE_RATE   (1<<6)
-#define FS_INDEX_OUT_OF_RANGE (1<<7)
+#define FS_OK                   0
+#define FS_ERROR               (1<<31)
+#define FS_WARNING             (1<<30)
+#define FS_INVALID_BUFFER      (1<<0)
+#define FS_INVALID_ARGUMENT    (1<<1)
+#define FS_INVALID_OPERATION   (1<<2)
+#define FS_DIVIDED_BY_ZERO     (1<<3)
+#define FS_FILE_IO_ERROR       (1<<4)
+#define FS_WRONG_BUF_SIZE      (1<<5)
+#define FS_DIFF_SAMPLE_RATE    (1<<6)
+#define FS_INDEX_OUT_OF_RANGE  (1<<7)
+#define FS_OUT_OF_MEMORY       (1<<8)
 
 /* Waveform types */
 #define FS_WAVE_SINE           1
@@ -55,6 +56,9 @@
 #define FOREACH_SAMPLE(buffer, idx) \
   for (idx = 0; idx < buffer->sample_count; ++idx)
 
+#define MIDI_NOTE(octave, note, level) \
+  ((octave * 12 + (note & 0x7f)) | (level << 8) & 0xffff)
+
 #define INVALID_BUFFER(buffer) \
   (buffer == NULL || buffer->buffer_size == 0 || buffer->sample_count == 0 || buffer->sample_rate == 0)
 
@@ -74,6 +78,12 @@ typedef struct {
   sample_t *samples;
 } FSampleBuffer;
 
+typedef struct {
+  int func_type;
+  FSampleBuffer* hull_curve;
+  FSampleBuffer* output;
+} FSTrackChannel;
+
 /* Error handling */
 void fs_set_error(int code);
 void fs_set_warning(int code);
@@ -88,12 +98,15 @@ FSampleBuffer *fs_create_sample_buffer(uint32_t sample_rate, double duration);
 FSampleBuffer *fs_clone_sample_buffer(FSampleBuffer *buffer);
 FSampleBuffer *fs_cat_sample_buffers(FSampleBuffer *buffer_a, FSampleBuffer *buffer_b);
 FSampleBuffer *fs_repeat_sample_buffer(FSampleBuffer *buffer, int times);
+int fs_cat_sample_buffers_inplace(FSampleBuffer *buffer_a, FSampleBuffer *buffer_b);
+int fs_repeat_sample_buffer_inplace(FSampleBuffer *buffer, int times);
 int fs_modulate_buffer(FSampleBuffer *dest, FSampleBuffer *src, int modulate_type);
 int fs_modulate_frequency(FSampleBuffer *dest, FSampleBuffer *source, int func_type, double amp);
 int fs_normalize_buffer(FSampleBuffer *buffer);
 double fs_get_buffer_duration(FSampleBuffer *buffer);
 size_t fs_get_buffer_position(FSampleBuffer *buffer, double time);
 int fs_scale_samples(FSampleBuffer *buffer, double level);
+int fs_resize_sample_buffer(FSampleBuffer *buffer, size_t new_size);
 
 /**
  * @brief Converts a sample position into the corresponding time value.
@@ -126,5 +139,7 @@ int fs_release(FSampleBuffer *buffer, int curve_type);
 /* Wave file generation and sample conversion functions */
 int fs_samples_to_wave_file(FSampleBuffer *buffer, const char *fname, int format, int channels);
 void *fs_convert_samples(FSampleBuffer *buffer, int format);
+
+int fs_track_sequence(FSTrackChannel *channel, uint16_t* data, size_t length);
 
 #endif

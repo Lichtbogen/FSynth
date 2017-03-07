@@ -28,13 +28,13 @@ void fs_print_error(int code)
 {
   if (code & FS_ERROR) {
     printf("FS Error: ");
-    if (code & FS_INVLID_BUFFER) {
+    if (code & FS_INVALID_BUFFER) {
       printf("Invalid buffer instance\n");
     }
-    if (code & FS_INVLID_ARGUMENT) {
+    if (code & FS_INVALID_ARGUMENT) {
       printf("Invalid argument\n");
     }
-    if (code & FS_INVLID_OPERATION) {
+    if (code & FS_INVALID_OPERATION) {
       printf("Inavlid operation\n");
     }
     if (code & FS_DIVIDED_BY_ZERO) {

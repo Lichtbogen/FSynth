@@ -7,21 +7,30 @@ FSampleBuffer *test_noise(void)
 {
   double play_time;
   FSampleBuffer *out;
-  FSampleBuffer *base = fs_create_sample_buffer(44100, 0.2);
-  FSampleBuffer *hull = fs_create_sample_buffer(44100, 0.2);
+  FSTrackChannel channel;
+  uint16_t track[16];
 
-  fs_generate_wave_func(base, FS_WAVE_RECT, 440, 1);
+  //FSampleBuffer *base = fs_create_sample_buffer(44100, 0.2);
+  channel.hull_curve = fs_create_sample_buffer(44100, 0.2);
+  channel.func_type = FS_WAVE_SINE;
 
-  play_time = fs_get_buffer_duration(hull);
-  fs_attack_decay(hull, FS_CURVE_SQUARE, play_time * 0.1, 1);
-  fs_release(hull, FS_CURVE_SQUARE);
+  //fs_generate_wave_func(base, FS_WAVE_RECT, 440, 1);
 
-  fs_modulate_buffer(base, hull, FS_MOD_MULT);
-  out = fs_repeat_sample_buffer(base, 10);
+  play_time = fs_get_buffer_duration(channel.hull_curve);
+  fs_attack_decay(channel.hull_curve, FS_CURVE_SQUARE, play_time * 0.1, 1);
+  fs_release(channel.hull_curve, FS_CURVE_SQUARE);
 
-  fs_normalize_buffer(out);
-  fs_delete_sample_buffer(&base);
-  return out;
+  track[0] = MIDI_NOTE(5, 2, 255);
+  track[1] = MIDI_NOTE(5, 3, 255);
+  track[2] = MIDI_NOTE(5, 4, 255);
+  track[3] = MIDI_NOTE(5, 3, 127);
+  track[4] = MIDI_NOTE(5, 2, 127);
+  track[5] = MIDI_NOTE(5, 1, 255);
+  fs_track_sequence(&channel, track, 6);
+
+  fs_normalize_buffer(channel.output);
+  fs_delete_sample_buffer(&channel.hull_curve);
+  return channel.output;
 }
 
 int main(int argc, char **argv)

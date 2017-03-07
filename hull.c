@@ -9,14 +9,14 @@ int fs_attack_decay(FSampleBuffer *buffer, int curve_type, double time, double l
   sample_t range, pos, lerp;
   fs_clear_error();
   if (INVALID_BUFFER(buffer)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
     return fs_get_error();
   }
   start_pos = buffer->hull_ptr;
   end_pos = buffer->hull_ptr + fs_get_buffer_position(buffer, time);
   end_pos = MIN(buffer->sample_count, end_pos);
   if (end_pos < start_pos) {
-    fs_set_error(FS_INVLID_OPERATION | FS_INVLID_ARGUMENT);
+    fs_set_error(FS_INVALID_OPERATION | FS_INVALID_ARGUMENT);
   } else {
     start_level = buffer->hull_level;
     end_level = buffer->hull_level + (sample_t)level;
@@ -42,7 +42,7 @@ int fs_attack_decay(FSampleBuffer *buffer, int curve_type, double time, double l
           buffer->samples[idx] = buffer->hull_level;
           break;
         default:
-          fs_set_error(FS_INVLID_ARGUMENT);
+          fs_set_error(FS_INVALID_ARGUMENT);
           return fs_get_error();
       }
     }

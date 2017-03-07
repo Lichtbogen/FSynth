@@ -1,0 +1,41 @@
+#include <stdlib.h>
+#include "fsynth.h"
+
+const double midi_notes[] = {
+/*   C       C#      D       D#      E       F       F#      G      G#       A      A#       H                 */
+   8.662,  9.177,  9.723, 10.301, 10.913, 11.562, 12.250, 12.978, 13.750, 14.568, 15.434, 16.352, /* Octave -1 */
+  17.324, 18.354, 19.445, 20.601, 21.826, 23.124, 24.499, 25.956, 27.50 , 29.135, 30.867, 32.703, /* Octave  0 */
+  34.648, 36.708, 38.890, 41.203, 43.653, 46.249, 48.999, 51.913, 55.000, 58.270, 61.735, 65.406, /* Octave  1 */
+  69.295, 73.416, 77.781, 82.406, 87.307, 92.499, 97.998, 103.82, 110.00, 116.54, 123.47, 130.81, /* Octave  2 */
+  138.59, 146.83, 155.56, 164.81, 174.61, 184.99, 195.99, 207.65, 220.00, 233.08, 246.94, 261.63, /* Octave  3 */
+  277.18, 293.66, 311.13, 349.23, 369.99, 391.99, 415.31, 440.00, 466.16, 493.88, 523.25, 554.37, /* Octave  4 */
+  587.33, 622.25, 659.26, 698.46, 739.99, 783.99, 830.61, 880.00, 932.32, 987.77, 1046.5, 1108.7, /* Octave  5 */
+  1174.7, 1244.5, 1318.5, 1396.9, 1480.0, 1568.0, 1661.2, 1760.0, 1864.7, 1975.5, 2093.0, 2217.5, /* Octave  6 */
+  2349.3, 2489.0, 2637.0, 2793.8, 2960.0, 3136.0, 3322.4, 3520.0, 3729.3, 3951.1, 4186.0, 4434.9, /* Octave  7 */
+  4698.6, 4978.0, 5274.0, 5587.7, 5919.9, 6271.9, 6644.9, 7040.0, 7458.6, 7902.1, 8372.0, 8869.8, /* Octave  8 */
+  9397.3, 9956.1, 10548.1, 11175.3, 11839.8, 12543.9                                              /* Octave  9 */
+};
+
+int fs_track_sequence(FSTrackChannel *channel, uint16_t* data, size_t length)
+{
+  size_t idx;
+  uint8_t note, amp;
+  FSampleBuffer *tone;
+  fs_clear_error();
+  tone = fs_create_sample_buffer_prop(channel->hull_curve);
+  if (FAILED(fs_get_error())) {
+    return fs_get_error();
+  }
+  for (idx = 0; idx < length; ++idx) {
+    note = data[idx] & 0x7f;  /* Low byte used for note */
+    amp = data[idx] >> 8;     /* High byte used for amplitude */
+    fs_generate_wave_func(tone, channel->func_type, midi_notes[note], amp / 256.);
+    fs_modulate_buffer(tone, channel->hull_curve, FS_MOD_MULT);
+    if (idx == 0) {
+      channel->output = fs_clone_sample_buffer(tone);
+    } else {
+      fs_cat_sample_buffers_inplace(channel->output, tone);
+    }
+  }
+  return fs_get_error();
+}

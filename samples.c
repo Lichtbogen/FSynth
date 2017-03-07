@@ -7,29 +7,71 @@
 FSampleBuffer *fs_create_sample_buffer_raw(uint32_t sample_rate, size_t sample_count)
 {
   FSampleBuffer *buffer;
+  fs_clear_error();
   buffer = (FSampleBuffer*) malloc(sizeof(FSampleBuffer));
+  if (buffer == NULL) {
+    fs_set_error(FS_OUT_OF_MEMORY);
+    return NULL;
+  }
   memset(buffer, 0, sizeof(FSampleBuffer));
   buffer->sample_count = sample_count;
   buffer->sample_rate = sample_rate;
   buffer->buffer_size = sizeof(sample_t) * sample_count;
   buffer->samples = (sample_t*) malloc(buffer->buffer_size);
+  if (buffer == NULL) {
+    fs_set_error(FS_OUT_OF_MEMORY);
+    return NULL;
+  }
   memset(buffer->samples, 0, buffer->buffer_size);
   return buffer;
 }
 
 FSampleBuffer *fs_create_sample_buffer_prop(FSampleBuffer *buffer)
 {
-  return fs_create_sample_buffer_raw(buffer->sample_rate, buffer->sample_rate);
+  return fs_create_sample_buffer_raw(buffer->sample_rate, buffer->sample_count);
 }
 
 int fs_clear_sample_buffer(FSampleBuffer *buffer)
 {
   fs_clear_error();
   if (INVALID_BUFFER(buffer)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
     return fs_get_error();
   }
   memset(buffer->samples, 0, buffer->buffer_size);
+  return fs_get_error();
+}
+
+int fs_resize_sample_buffer(FSampleBuffer *buffer, size_t new_size)
+{
+  fs_clear_error();
+  if (!INVALID_BUFFER(buffer)) {
+    buffer->buffer_size = sizeof(sample_t) * new_size;
+    buffer->samples = (sample_t*) realloc(buffer->samples, buffer->buffer_size);
+    if (buffer->samples == NULL) {
+      fs_set_error(FS_OUT_OF_MEMORY);
+      buffer->sample_count = 0;
+      buffer->buffer_size = 0;
+    } else {
+      buffer->sample_count = new_size;
+    }
+  }
+  return fs_get_error();
+}
+
+int fs_cat_sample_buffers_inplace(FSampleBuffer *buffer_a, FSampleBuffer *buffer_b)
+{
+  size_t new_size, old_size;
+  fs_clear_error();
+  if (!INVALID_BUFFER(buffer_a) && !INVALID_BUFFER(buffer_b)) {
+    new_size = buffer_a->sample_count + buffer_b->sample_count;
+    old_size = buffer_a->sample_count;
+    if (!FAILED(fs_resize_sample_buffer(buffer_a, new_size))) {
+      memcpy(&buffer_a->samples[old_size-1], buffer_b->samples, buffer_b->buffer_size);
+    }
+  } else {
+    fs_set_error(FS_INVALID_BUFFER);
+  }
   return fs_get_error();
 }
 
@@ -42,7 +84,7 @@ FSampleBuffer *fs_cat_sample_buffers(FSampleBuffer *buffer_a, FSampleBuffer *buf
     memcpy(pout->samples, buffer_a->samples, buffer_a->buffer_size);
     memcpy(&pout->samples[buffer_a->sample_count-1], buffer_b->samples, buffer_b->buffer_size);
   } else {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
   }
   return pout;
 }
@@ -63,6 +105,16 @@ FSampleBuffer *fs_repeat_sample_buffer(FSampleBuffer *buffer, int times)
   return pout;
 }
 
+int fs_repeat_sample_buffer_inplace(FSampleBuffer *buffer, int times)
+{
+  int i;
+  fs_clear_error();
+  for (i = 1; i < times-1; ++i) {
+    if (FAILED(fs_cat_sample_buffers_inplace(buffer, buffer))) break;
+  }
+  return fs_get_error();
+}
+
 FSampleBuffer *fs_clone_sample_buffer(FSampleBuffer *buffer)
 {
   FSampleBuffer *clone = fs_create_sample_buffer_raw(buffer->sample_rate, buffer->sample_count);
@@ -81,7 +133,7 @@ int fs_scale_samples(FSampleBuffer *buffer, double level)
   size_t idx;
   fs_clear_error();
   if (INVALID_BUFFER(buffer)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
   } else {
     FOREACH_SAMPLE(buffer, idx) {
       buffer->samples[idx] *= level;
@@ -93,7 +145,7 @@ int fs_scale_samples(FSampleBuffer *buffer, double level)
 double fs_get_buffer_duration(FSampleBuffer *buffer)
 {
   if (INVALID_BUFFER(buffer)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
   }
   return buffer->sample_count / (double)buffer->sample_rate;
 }
@@ -102,7 +154,7 @@ size_t fs_get_buffer_position(FSampleBuffer *buffer, double time)
 {
   size_t position = 0;
   if (INVALID_BUFFER(buffer)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
   } else  {
     position = buffer->sample_rate * time;
     position = MIN(buffer->sample_count, position);
@@ -114,10 +166,10 @@ double fs_get_time_position(FSampleBuffer *buffer, size_t pos)
 {
   double time = 0;
   if (INVALID_BUFFER(buffer)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
   } else  {
     if (pos > buffer->sample_count) {
-      fs_set_error(FS_INVLID_OPERATION | FS_INVLID_ARGUMENT);
+      fs_set_error(FS_INVALID_OPERATION | FS_INVALID_ARGUMENT);
     } else {
       time = pos / (double)buffer->sample_rate;
     }
@@ -164,7 +216,7 @@ int fs_normalize_buffer(FSampleBuffer *buffer)
   sample_t x, min_val = 1e300, max_val = 0;
   fs_clear_error();
   if (INVALID_BUFFER(buffer)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
     return fs_get_error();
   }
   FOREACH_SAMPLE(buffer, idx) {
@@ -190,7 +242,7 @@ int fs_modulate_buffer(FSampleBuffer *dest, FSampleBuffer *src, int modulate_typ
   int idx;
   fs_clear_error();
   if (INVALID_BUFFER(dest) || INVALID_BUFFER(src)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
     return fs_get_error();
   }
   if (dest->sample_count < src->sample_count) {
@@ -224,7 +276,7 @@ int fs_modulate_buffer(FSampleBuffer *dest, FSampleBuffer *src, int modulate_typ
       dest->samples[idx] *= log10(src->samples[idx]);
       break;
     default:
-      fs_set_error(FS_INVLID_ARGUMENT);
+      fs_set_error(FS_INVALID_ARGUMENT);
       break;
     }
   }
@@ -266,17 +318,17 @@ int fs_generate_wave_func(FSampleBuffer *buffer, int func_type, double freq, dou
   double shift, phase = 0;
   fs_clear_error();
   if (INVALID_BUFFER(buffer)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
     return fs_get_error();
   }
   if (freq == 0) {
-    fs_set_error(FS_INVLID_ARGUMENT);
+    fs_set_error(FS_INVALID_ARGUMENT);
     return fs_get_error();
   }
   shift = M_PI * 2. / ((double)buffer->sample_rate / freq);
   FOREACH_SAMPLE(buffer, idx) {
     if (wave_func_intern(&buffer->samples[idx], func_type, phase, amp) != FS_OK) {
-      fs_set_error(FS_INVLID_ARGUMENT);
+      fs_set_error(FS_INVALID_ARGUMENT);
       break;
     }
     phase = fmod(phase + shift, M_PI * 2.);
@@ -290,13 +342,13 @@ int fs_modulate_frequency(FSampleBuffer *dest, FSampleBuffer *source, int func_t
   double shift, phase = 0;
   fs_clear_error();
   if (INVALID_BUFFER(dest) || INVALID_BUFFER(source)) {
-    fs_set_error(FS_INVLID_BUFFER);
+    fs_set_error(FS_INVALID_BUFFER);
     return fs_get_error();
   }
   FOREACH_SAMPLE(dest, idx) {
     shift = M_PI * 2. / ((double)dest->sample_rate / source->samples[idx]);
     if (wave_func_intern(&dest->samples[idx], func_type, phase, amp) != FS_OK) {
-      fs_set_error(FS_INVLID_ARGUMENT);
+      fs_set_error(FS_INVALID_ARGUMENT);
       break;
     }
     phase = fmod(phase + shift, M_PI * 2.);
@@ -306,9 +358,11 @@ int fs_modulate_frequency(FSampleBuffer *dest, FSampleBuffer *source, int func_t
 
 void fs_delete_sample_buffer(FSampleBuffer **buffer)
 {
-  if ((*buffer)->buffer_size > 0) {
-    free((*buffer)->samples);
+  if (buffer != NULL && (*buffer) != NULL) {
+    if ((*buffer)->buffer_size > 0) {
+      free((*buffer)->samples);
+    }
+    free(*buffer);
+    *buffer = NULL;
   }
-  free(*buffer);
-  *buffer = NULL;
 }
