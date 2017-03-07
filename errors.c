@@ -35,7 +35,7 @@ void fs_print_error(int code)
       printf("Invalid argument\n");
     }
     if (code & FS_INVALID_OPERATION) {
-      printf("Inavlid operation\n");
+      printf("Invalid operation\n");
     }
     if (code & FS_DIVIDED_BY_ZERO) {
       printf("Division by zero\n");

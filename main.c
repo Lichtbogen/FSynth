@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 #include "fsynth.h"
 
 FSampleBuffer *test_noise(void)
@@ -52,6 +53,7 @@ int main(int argc, char **argv)
   fs_release(hull, FS_CURVE_LINEAR);
   fs_modulate_buffer(buf, hull, FS_MOD_MULT);
   fs_normalize_buffer(buf);
+  fs_scale_samples(buf, dB(-12));
 
   out = fs_repeat_sample_buffer(buf, 4);
   fs_samples_to_wave_file(out, "tone.wav", WAVE_PCM_16BIT, 1);

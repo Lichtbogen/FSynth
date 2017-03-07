@@ -36,7 +36,7 @@ void *fs_convert_samples(FSampleBuffer *buffer, int format)
     }
     return buffer_16bit;
   } else {
-    fs_set_error(FS_INVLID_ARGUMENT);
+    fs_set_error(FS_INVALID_ARGUMENT);
   }
   return NULL;
 }
