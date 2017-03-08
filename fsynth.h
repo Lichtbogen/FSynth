@@ -54,11 +54,9 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define LERP(min, max, t) ((1 - (t)) * (min)  + (t) * (max))
+#define RAND_F ((rand() & 0xffff) / 65535.)
 #define FOREACH_SAMPLE(buffer, idx) \
   for (idx = 0; idx < buffer->sample_count; ++idx)
-
-#define MIDI_NOTE(octave, note, level) \
-  ((octave * 12 + (note & 0x7f)) | (level << 8) & 0xffff)
 
 #define INVALID_BUFFER(buffer) \
   (buffer == NULL || buffer->buffer_size == 0 || buffer->sample_count == 0 || buffer->sample_rate == 0)
@@ -289,5 +287,9 @@ int fs_samples_to_wave_file(FSampleBuffer *buffer, const char *fname, int format
  * @return a pointer to the output data, after usage the used memory can be freed by calling the standard function free()
  */
 void *fs_convert_samples(FSampleBuffer *buffer, int format);
+
+int fs_generate_pink_noise(FSampleBuffer *buffer, int func_type, double min_freq, double max_freq, int overlays);
+size_t fs_parse_notes(const char *seq, uint16_t *data, size_t length);
+int fs_track_sequence(FSTrackChannel *channel, int octave, uint16_t *data, size_t length);
 
 #endif

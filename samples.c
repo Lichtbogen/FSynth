@@ -336,6 +336,25 @@ int fs_generate_wave_func(FSampleBuffer *buffer, int func_type, double freq, dou
   return fs_get_error();
 }
 
+int fs_generate_pink_noise(FSampleBuffer *buffer, int func_type, double min_freq, double max_freq, int overlays)
+{
+  double freq, amplitude;
+  FSampleBuffer *temp = fs_create_sample_buffer_prop(buffer);
+  if (FAILED(fs_get_error())) {
+    return fs_get_error();
+  }
+  fs_clear_error();
+  while ((--overlays) > 0) {
+    freq = min_freq + RAND_F * max_freq;
+    amplitude = ((rand() & 0xffff) / 65535. - .5) * 2.;
+    fs_generate_wave_func(temp, func_type, freq, amplitude);
+    fs_modulate_buffer(buffer, temp, FS_MOD_ADD);
+    if (FAILED(fs_get_error())) break;
+  }
+  fs_delete_sample_buffer(&temp);
+  return fs_get_error();
+}
+
 int fs_modulate_frequency(FSampleBuffer *dest, FSampleBuffer *source, int func_type, double amp)
 {
   int idx;

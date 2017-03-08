@@ -1,11 +1,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <memory.h>
+#include <math.h>
 #include "fsynth.h"
 
 const double midi_notes[] = {
 /*   C       C#      D       D#      E       F       F#      G      G#       A      A#       H                 */
-  8.662,  9.177 ,  9.723, 10.301, 10.913, 11.562, 12.250, 12.978, 13.750, 14.568, 15.434, 16.352, /* Octave -1 */
+  8.662 ,  9.177,  9.723, 10.301, 10.913, 11.562, 12.250, 12.978, 13.750, 14.568, 15.434, 16.352, /* Octave -1 */
   17.324, 18.354, 19.445, 20.601, 21.826, 23.124, 24.499, 25.956, 27.50 , 29.135, 30.867, 32.703, /* Octave  0 */
   34.648, 36.708, 38.890, 41.203, 43.653, 46.249, 48.999, 51.913, 55.000, 58.270, 61.735, 65.406, /* Octave  1 */
   69.295, 73.416, 77.781, 82.406, 87.307, 92.499, 97.998, 103.82, 110.00, 116.54, 123.47, 130.81, /* Octave  2 */
@@ -18,79 +19,83 @@ const double midi_notes[] = {
   9397.3, 9956.1, 10548.1, 11175.3, 11839.8, 12543.9                                              /* Octave  9 */
 };
 
-size_t fs_parse_sequence(const char *seq, uint16_t *data, size_t length)
+size_t fs_parse_notes(const char *seq, uint16_t *data, size_t length)
 {
-  int dbi = -1;
+  int octave, dbi = -1;
   char ch, lastch = 0;
   char dbval[4];
   size_t dl = 0, di = 0;
   while (*seq) {
     ch = toupper(*seq);
     switch (ch) {
-      case 'C':
-        data[di++] = 0;
-        dl = di;
-        lastch = ch;
-        break;
-      case 'D':
-        data[di++] = 2;
-        dl = di;
-        lastch = ch;
-        break;
-      case 'E':
-        data[di++] = 4;
-        dl = di;
-        lastch = ch;
-        break;
-      case 'F':
-        data[di++] = 5;
-        dl = di;
-        lastch = ch;
-        break;
-      case 'G':
-        data[di++] = 7;
-        dl = di;
-        lastch = ch;
-        break;
-      case 'A':
-        data[di++] = 9;
-        dl = di;
-        lastch = ch;
-        break;
-      case 'H':
-        data[di++] = 11;
-        dl = di;
-        lastch = ch;
-        break;
-      case '#':
-        if (lastch != 'E' && lastch != 'H') data[dl] += 1;
-        break;
-      case '@':
-        dbi = 0;
-        memset(dbval, '\0', sizeof(dbval));
-        break;
-      default:
-        if (isdigit(ch)) {
-          if (dbi == -1)
-            data[dl] *= ch - 0x30 + 1;
-          else {
-            dbval[dbi++] = ch;
-          }
+    case 'C':
+      dl = di;
+      data[di++] = 0;
+      lastch = ch;
+      break;
+    case 'D':
+      dl = di;
+      data[di++] = 2;
+      lastch = ch;
+      break;
+    case 'E':
+      dl = di;
+      data[di++] = 4;
+      lastch = ch;
+      break;
+    case 'F':
+      dl = di;
+      data[di++] = 5;
+      lastch = ch;
+      break;
+    case 'G':
+      dl = di;
+      data[di++] = 7;
+      lastch = ch;
+      break;
+    case 'A':
+      dl = di;
+      data[di++] = 9;
+      lastch = ch;
+      break;
+    case 'H':
+      dl = di;
+      data[di++] = 11;
+      lastch = ch;
+      break;
+    case '#':
+      if (lastch != 'E' && lastch != 'H') data[dl] += 1;
+      break;
+    case '@':
+      dbi = 0;
+      memset(dbval, '\0', sizeof(dbval));
+      break;
+    default:
+      if (isdigit(ch)) {
+        if (dbi == -1) {
+          octave = (ch - 0x30 + 1) * 12;
+          data[dl] += octave;
         } else {
-          if (dbi != -1) {
-            data[dl] |= atoi(dbval) << 8;
-          }
+          dbval[dbi++] = ch;
         }
-        break;
+      }
+      break;
+    }
+    if (!isdigit(ch) && dbi > 0 && dl > 0) {
+      data[dl-1] |= atoi(dbval) << 8;
+      dbi = -1;
     }
     dbi = MIN(dbi, 3);
     if (di >= length) break;
     ++seq;
   }
+  if (dbi > 0 && dl >= 0) {
+    data[dl] |= atoi(dbval) << 8;
+  }
   return di;
 }
 
-int fs_track_sequence(FSTrackChannel *channel, uint16_t *data, size_t length)
+int fs_track_sequence(FSTrackChannel *channel, int octave, uint16_t *data, size_t length)
 {
   size_t idx;
   uint8_t note, amp;
@@ -101,9 +106,9 @@ int fs_track_sequence(FSTrackChannel *channel, uint16_t *data, size_t length)
     return fs_get_error();
   }
   for (idx = 0; idx < length; ++idx) {
-    note = data[idx] & 0x7f;  /* Low byte used for note */
+    note = (data[idx] + octave * 12) & 0x7f;  /* Low byte used for note */
     amp = data[idx] >> 8;     /* High byte used for amplitude */
-    fs_generate_wave_func(tone, channel->func_type, midi_notes[note], amp / 256.);
+    fs_generate_wave_func(tone, channel->func_type, midi_notes[note], dB(-amp));
     fs_modulate_buffer(tone, channel->hull_curve, FS_MOD_MULT);
     if (FAILED(fs_get_error())) {
       return fs_get_error();
