@@ -15,64 +15,39 @@
  */
 
 /**
- * @brief Functions for basic error handling
+ * @brief Generic double linked list with hash function support
  * @author Pierre Biermann
  * @date 2017-03-10
  */
 
-#include <stdio.h>
-#include "fsynth.h"
+#ifndef _LIST_H_
+#define _LIST_H_
 
-int error_code = 0;
+#ifndef HASH
+#define HASH(data, size) hash_sdbm(0, data, data_size)
+#endif
 
-void fs_set_error(int code)
-{
-  error_code = error_code | FS_ERROR | code;
-}
+typedef unsigned int hash_t;
 
-void fs_set_warning(int code)
-{
-  error_code = error_code | FS_WARNING | code;
-}
+struct NodeList {
+  struct NodeItem *head;
+  struct NodeItem *tail;
+};
 
-int fs_get_error(void)
-{
-  return error_code;
-}
+struct NodeItem {
+  hash_t hash;
+  void* data;
+  struct NodeItem *prev;
+  struct NodeItem *next;
+};
 
-int fs_clear_error(void)
-{
-  error_code = FS_OK;
-  return error_code;
-}
+struct NodeItem *push_back(struct NodeList *list, void* data, size_t data_size);
+struct NodeItem *insert_item(struct NodeList *list, struct NodeItem *item, void* data, size_t data_size);
+struct NodeItem *push_back_hashed(struct NodeList *list, void* data, size_t data_size);
+struct NodeItem *insert_item_hashed(struct NodeList *list, struct NodeItem *item, void* data, size_t data_size);
+struct NodeItem *find_item(struct NodeList *list, hash_t hash);
+void delete_item(struct NodeList *list, struct NodeItem *item);
+hash_t hash_sdbm(hash_t hv, const char *data, size_t data_size);
+hash_t hash_djb2(hash_t hv, const char *data, size_t data_size);
 
-void fs_print_error(int code)
-{
-  if (code & FS_ERROR) {
-    printf("FS Error: ");
-    if (code & FS_INVALID_BUFFER) {
-      printf("Invalid buffer instance\n");
-    }
-    if (code & FS_INVALID_ARGUMENT) {
-      printf("Invalid argument\n");
-    }
-    if (code & FS_INVALID_OPERATION) {
-      printf("Invalid operation\n");
-    }
-    if (code & FS_DIVIDED_BY_ZERO) {
-      printf("Division by zero\n");
-    }
-    if (code & FS_FILE_IO_ERROR) {
-      printf("File IO error\n");
-    }
-    if (code & FS_WRONG_BUF_SIZE) {
-      printf("Wrong buffer size\n");
-    }
-    if (code & FS_DIFF_SAMPLE_RATE) {
-      printf("Input buffers with different sample rates\n");
-    }
-    if (code & FS_INDEX_OUT_OF_RANGE) {
-      printf("Buffer index out of range\n");
-    }
-  }
-}
+#endif /* _LIST_H_ */
