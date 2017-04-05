@@ -12,30 +12,25 @@ CC     = gcc
 CFLAGS = -Wall
 LFLAGS = -lm
 DFLAGS = -DDEBUG -g
-OFLAGS = -O3 -s
+OFLAGS = -O2
 
 ## Object file list
-OBJ = main.o wavefmt.o samples.o errors.o hull.o sequencer.o 
+OBJ = cshell.o errors.o hull.o list.o main.o samples.o sequencer.o wavefmt.o 
 
 all: $(NAME)
 
 debug: CFLAGS += $(DFLAGS)
 debug: $(NAME)
 
-release: CFLAGS += $(OFLAGS)
+release: CFLAGS += $(OFLAGS) -DNDEBUG
+release: LFLAGS += -s
 release: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CC) $(CFLAGS) $(LFLAGS) $(OBJ) -o fsynth
+	$(CC) $(LFLAGS) $(CFLAGS) $(OBJ) -o $(NAME)
 
-main.o: main.c
-	$(CC) $(CFLAGS) -c main.c
-
-wavefmt.o: wavefmt.c
-	$(CC) $(CFLAGS) -c wavefmt.c
-
-samples.o: samples.c
-	$(CC) $(CFLAGS) -c samples.c
+cshell.o: cshell.c
+	$(CC) $(CFLAGS) -c cshell.c
 
 errors.o: errors.c
 	$(CC) $(CFLAGS) -c errors.c
@@ -43,8 +38,20 @@ errors.o: errors.c
 hull.o: hull.c
 	$(CC) $(CFLAGS) -c hull.c
 
+list.o: list.c
+	$(CC) $(CFLAGS) -c list.c
+
+main.o: main.c
+	$(CC) $(CFLAGS) -c main.c
+
+samples.o: samples.c
+	$(CC) $(CFLAGS) -c samples.c
+
 sequencer.o: sequencer.c
 	$(CC) $(CFLAGS) -c sequencer.c
+
+wavefmt.o: wavefmt.c
+	$(CC) $(CFLAGS) -c wavefmt.c
 
 clean:
 	rm $(OBJ)

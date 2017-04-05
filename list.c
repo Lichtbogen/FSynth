@@ -1,17 +1,25 @@
 /*
  * Copyright (c) 2017 Pierre Biermann
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge,
+ * to any person obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+ * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /**
@@ -38,8 +46,12 @@ struct NodeItem *push_back(struct NodeList *list, void* data, size_t data_size)
     list->tail->next = node;
   }
   list->tail = node;
-  node->data = malloc(data_size);
-  memcpy(node->data, data, data_size);
+  if (data_size > 0) {
+    node->data = malloc(data_size);
+    memcpy(node->data, data, data_size);
+  } else {
+    node->data = data; /* Store only the pointer, if data_size is 0 */
+  }
   return node;
 }
 
@@ -83,8 +95,12 @@ struct NodeItem *insert_item(struct NodeList *list, struct NodeItem *item, void*
   node->hash = 0;
   node->prev = item;
   item->next = node;
-  node->data = malloc(data_size);
-  memcpy(node->data, data, data_size);
+  if (data_size > 0) {
+    node->data = malloc(data_size);
+    memcpy(node->data, data, data_size);
+  } else {
+    node->data = data; /* Store only the pointer, if data_size is 0 */
+  }
   return node;
 }
 

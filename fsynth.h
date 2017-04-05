@@ -1,17 +1,25 @@
 /*
  * Copyright (c) 2017 Pierre Biermann
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge,
+ * to any person obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+ * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /**
@@ -22,6 +30,8 @@
 
 #ifndef _FSYNTH_H_
 #define _FSYNTH_H_
+
+#define FS_VERSION             "0.0.0.1"
 
 #ifndef _STDINT_H_
 #include <stdint.h>
@@ -85,10 +95,15 @@
 
 /* Type definitions */
 #ifndef SINGLE
+#define DOUBLE_SAMPLE
 typedef double sample_t;
 #else
+#define SINGLE_SAMPLE
 typedef float sample_t;
 #endif
+
+/* Function pointer data type for shell command callbacks */
+typedef int (*FShellCallback)(int, char **);
 
 typedef struct {
   uint32_t sample_rate;
@@ -310,8 +325,35 @@ int fs_samples_to_wave_file(FSampleBuffer *buffer, const char *fname, int format
  */
 void *fs_convert_samples(FSampleBuffer *buffer, int format);
 
+/**
+ * @brief Generates a pink noise which means a set of overlapped functions with limited bandwidth and randomized amplitudes
+ * @param buffer the buffer with the samples which shall be converted
+ * @param func_type the function type possible values are:
+ *                  FS_WAVE_SINE, FS_WAVE_COSINE, FS_WAVE_SAW, FS_WAVE_TRIANGLE, FS_WAVE_RECT or FS_WAVE_NOISE
+ * @param min_freq the smallest frequency to be generate
+ * @param max_freq the gretest frequency to be generate
+ * @param overlays the amount of overlapped functions
+ * @return FS_OK or an error code on failure
+ */
 int fs_generate_pink_noise(FSampleBuffer *buffer, int func_type, double min_freq, double max_freq, int overlays);
+
+/**
+ * @brief Generates a sequence of MIDI notes based upon the given notes string
+ * @param seq input string with notes
+ * @param pointer to a buffer which carries the output data
+ * @param length maximal length of the output data
+ * @return number of values which has been written to the output buffer
+ */
 size_t fs_parse_notes(const char *seq, uint16_t *data, size_t length);
+
+/**
+ * @brief Generates a sequencer track with an output sample buffer and a given hull curve
+ * @param channel pointer to a FSTrackChannel pointer
+ * @param octave Octave adjustment as a relative value
+ * @param data pointer to MIDI data
+ * @param length number of elements within the MIDI data buffer
+ * @return FS_OK or an error code on failure
+ */
 int fs_track_sequence(FSTrackChannel *channel, int octave, uint16_t *data, size_t length);
 
 #endif /* _FSYNTH_H_ */

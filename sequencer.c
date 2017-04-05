@@ -1,17 +1,25 @@
 /*
  * Copyright (c) 2017 Pierre Biermann
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge,
+ * to any person obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+ * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /**
@@ -48,7 +56,7 @@ size_t fs_parse_notes(const char *seq, uint16_t *data, size_t length)
   char dbval[4];
   size_t dl = 0, di = 0;
   while (*seq) {
-    ch = toupper(*seq);
+    ch = toupper((int)*seq);
     switch (ch) {
     case 'C':
       dl = di;
@@ -93,7 +101,7 @@ size_t fs_parse_notes(const char *seq, uint16_t *data, size_t length)
       memset(dbval, '\0', sizeof(dbval));
       break;
     default:
-      if (isdigit(ch)) {
+      if (isdigit((int)ch)) {
         if (dbi == -1) {
           octave = (ch - 0x30 + 1) * 12;
           data[dl] += octave;
@@ -103,7 +111,7 @@ size_t fs_parse_notes(const char *seq, uint16_t *data, size_t length)
       }
       break;
     }
-    if (!isdigit(ch) && dbi > 0 && dl > 0) {
+    if (!isdigit((int)ch) && dbi > 0 && dl > 0) {
       data[dl-1] |= atoi(dbval) << 8;
       dbi = -1;
     }
