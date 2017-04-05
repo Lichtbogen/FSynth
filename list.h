@@ -37,6 +37,7 @@ struct NodeList {
 struct NodeItem {
   hash_t hash;
   void* data;
+  size_t data_size;
   struct NodeItem *prev;
   struct NodeItem *next;
 };
@@ -46,6 +47,7 @@ struct NodeItem *insert_item(struct NodeList *list, struct NodeItem *item, void*
 struct NodeItem *push_back_hashed(struct NodeList *list, void* data, size_t data_size);
 struct NodeItem *insert_item_hashed(struct NodeList *list, struct NodeItem *item, void* data, size_t data_size);
 struct NodeItem *find_item(struct NodeList *list, hash_t hash);
+void delete_list(struct NodeList *list);
 void delete_item(struct NodeList *list, struct NodeItem *item);
 hash_t hash_sdbm(hash_t hv, const char *data, size_t data_size);
 hash_t hash_djb2(hash_t hv, const char *data, size_t data_size);

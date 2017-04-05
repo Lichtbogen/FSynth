@@ -1,40 +1,51 @@
+/*
+ * Copyright (c) 2017 Pierre Biermann
+ *
+ * Permission is hereby granted, free of charge,
+ * to any person obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+ * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * @brief Main module
+ * @author Pierre Biermann
+ * @date 2017-04-05
+ */
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <math.h>
+
 #include "fsynth.h"
 
 void shell_loop();
-
-FSampleBuffer *test_noise(void)
-{
-  double play_time;
-  FSampleBuffer *out;
-  FSTrackChannel channel;
-  uint16_t track[16];
-  size_t len;
-
-  len = fs_parse_notes("c4d4@8e4@6f4c#4@8e#4@8", track, 16);
-
-  //FSampleBuffer *base = fs_create_sample_buffer(44100, 0.2);
-  channel.hull_curve = fs_create_sample_buffer(44100, 0.2);
-  channel.func_type = FS_WAVE_SINE;
-
-  //fs_generate_wave_func(base, FS_WAVE_RECT, 440, 1);
-
-  play_time = fs_get_buffer_duration(channel.hull_curve);
-  fs_attack_decay(channel.hull_curve, FS_CURVE_SQUARE, play_time * 0.1, 1);
-  fs_release(channel.hull_curve, FS_CURVE_SQUARE);
-
-  fs_track_sequence(&channel, 1, track, 6);
-
-  fs_normalize_buffer(channel.output);
-  fs_delete_sample_buffer(&channel.hull_curve);
-  return channel.output;
-}
+void shell_cleanup();
+void shell_register();
 
 int main(int argc, char **argv)
 {
+#ifndef DEBUG
+  printf("FSynth: version %s build on %s %s\n", FS_VERSION, __DATE__, __TIME__);
+#else
+  printf("FSynth: version %s DEBUG build on %s %s\n", FS_VERSION, __DATE__, __TIME__);
+#endif
+  printf("GCC: %s\n", __VERSION__);
+  shell_register();
   shell_loop();
+  shell_cleanup();
   return 0;
 }

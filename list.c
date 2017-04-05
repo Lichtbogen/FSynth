@@ -52,6 +52,7 @@ struct NodeItem *push_back(struct NodeList *list, void* data, size_t data_size)
   } else {
     node->data = data; /* Store only the pointer, if data_size is 0 */
   }
+  node->data_size = data_size;
   return node;
 }
 
@@ -77,7 +78,8 @@ void delete_item(struct NodeList *list, struct NodeItem *item)
     if (list->tail == item) {
       list->tail = item->prev;
     }
-    free(item->data);
+    if (item->data_size > 0)
+      free(item->data);
     free(item);
   }
 }
@@ -101,6 +103,7 @@ struct NodeItem *insert_item(struct NodeList *list, struct NodeItem *item, void*
   } else {
     node->data = data; /* Store only the pointer, if data_size is 0 */
   }
+  node->data_size = data_size;
   return node;
 }
 
@@ -129,7 +132,8 @@ void delete_list(struct NodeList *list)
   struct NodeItem *temp, *node = list->tail;
   while (node != NULL) {
     temp = node->prev;
-    free(node->data);
+    if (node->data_size > 0)
+      free(node->data);
     free(node);
     node = temp;
   }

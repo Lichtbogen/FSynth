@@ -38,7 +38,9 @@
 #define MAX_PARAM      32
 #define CBUFFER_SIZE   1024
 
-struct NodeList cb_list = { NULL, NULL };
+int exit_flag = 0;
+struct NodeList cb_list = { NULL, NULL }; /* Shell command list */
+struct NodeList sb_list = { NULL, NULL }; /* Sample buffer list */
 
 void register_shell_command(FShellCallback *fptr, const char *fname)
 {
@@ -48,21 +50,26 @@ void register_shell_command(FShellCallback *fptr, const char *fname)
 
 void process_command(char *cline)
 {
-  int ch, argc = 0;
+  int ch, hc, argc = 0;
   char *cptr = cline;
   char *argv[MAX_PARAM];
-
+  FShellCallback cmdFunc;
+  struct NodeItem *cbItem;
   while (*cline) {
     ch = *cline;
     if (isspace(ch)) {
       if (argc == 0) {
         *cline = 0;
-        printf("%s\n", cptr);
+        hc = hash_sdbm(0, cptr, strlen(cptr));
+        cbItem = find_item(&cb_list, hc);
+        argv[argc++] = cptr;
+        if (cbItem != NULL) {
+          cmdFunc = cbItem->data;
+          (cmdFunc)(argc, argv);
+        }
         cptr = cline + 1;
-        ++argc;
       } else {
         *cline = 0;
-        printf("%s\n", cptr);
         argv[argc++] = cptr;
         cptr = cline + 1;
       }
@@ -71,12 +78,34 @@ void process_command(char *cline)
   }
 }
 
+int shell_cmd_exit(int argc, char **argv)
+{
+  exit_flag = 1;
+  return FS_OK;
+}
+
+int shell_cmd_buffer(int argc, char **argv)
+{
+  return FS_OK;
+}
+
+void shell_register(void)
+{
+  register_shell_command((FShellCallback*)&shell_cmd_exit, "exit");
+}
+
+void shell_cleanup(void)
+{
+  delete_list(&cb_list);
+}
+
 void shell_loop(void)
 {
   char cbuffer[CBUFFER_SIZE];
   printf("fs> ");
   while (fgets(cbuffer, CBUFFER_SIZE, stdin) != NULL) {
     process_command(cbuffer);
+    if (exit_flag) break;
     printf("fs> ");
   }
 }
