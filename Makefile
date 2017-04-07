@@ -15,7 +15,8 @@ DFLAGS = -DDEBUG -g
 OFLAGS = -O2
 
 ## Object file list
-OBJ = cshell.o errors.o hull.o list.o main.o samples.o sequencer.o wavefmt.o 
+OBJ = cshell.o errors.o hull.o list.o main.o samples.o sequencer.o wavefmt.o logging.o \
+	
 
 all: $(NAME)
 
@@ -52,6 +53,9 @@ sequencer.o: sequencer.c
 
 wavefmt.o: wavefmt.c
 	$(CC) $(CFLAGS) -c wavefmt.c
+
+logging.o: logging.c
+	$(CC) $(CFLAGS) -c logging.c
 
 clean:
 	rm $(OBJ)

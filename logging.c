@@ -23,64 +23,44 @@
  */
 
 /**
- * @brief Functions for basic error handling
+ * @brief Logging module
  * @author Pierre Biermann
- * @date 2017-03-10
+ * @date 2017-04-06
  */
 
 #include <stdio.h>
-#include "fsynth.h"
+#include <stdarg.h>
 #include "logging.h"
 
-int error_code = 0;
+int log_level = LOG_INFO | LOG_WARN | LOG_ERR;
 
-void fs_set_error(int code)
+void fs_set_log_level(int level)
 {
-  error_code = error_code | FS_ERROR | code;
+  log_level = level;
 }
 
-void fs_set_warning(int code)
+int fs_get_log_level(void)
 {
-  error_code = error_code | FS_WARNING | code;
+  return log_level;
 }
 
-int fs_get_error(void)
+void fs_log(int level, const char *format, ...)
 {
-  return error_code;
-}
-
-int fs_clear_error(void)
-{
-  error_code = FS_OK;
-  return error_code;
-}
-
-void fs_print_error(int code)
-{
-  if (code & FS_ERROR) {
-    if (code & FS_INVALID_BUFFER) {
-      fs_log(LOG_ERR, "Invalid buffer instance");
-    }
-    if (code & FS_INVALID_ARGUMENT) {
-      fs_log(LOG_ERR, "Invalid argument");
-    }
-    if (code & FS_INVALID_OPERATION) {
-      fs_log(LOG_ERR, "Invalid operation");
-    }
-    if (code & FS_DIVIDED_BY_ZERO) {
-      fs_log(LOG_ERR, "Division by zero");
-    }
-    if (code & FS_FILE_IO_ERROR) {
-      fs_log(LOG_ERR, "File IO error");
-    }
-    if (code & FS_WRONG_BUF_SIZE) {
-      fs_log(LOG_ERR, "Wrong buffer size");
-    }
-    if (code & FS_DIFF_SAMPLE_RATE) {
-      fs_log(LOG_ERR, "Input buffers with different sample rates\n");
-    }
-    if (code & FS_INDEX_OUT_OF_RANGE) {
-      fs_log(LOG_ERR, "Buffer index out of range\n");
-    }
+  va_list args;
+  if ((log_level & LOG_ERR) && (level == LOG_ERR)) {
+    fprintf(stderr, "Error: ");
   }
+  if ((log_level & LOG_WARN) && (level == LOG_WARN)) {
+    fprintf(stderr, "Warning: ");
+  }
+  if ((log_level & LOG_INFO) && (level == LOG_INFO)) {
+    fprintf(stderr, "Info: ");
+  }
+  if ((log_level & LOG_DEBUG) && (level == LOG_DEBUG)) {
+    fprintf(stderr, "Debug: ");
+  }
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  fputc('\n', stderr);
+  va_end(args);
 }
