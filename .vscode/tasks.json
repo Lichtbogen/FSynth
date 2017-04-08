@@ -9,26 +9,6 @@
       "isShellCommand": true,
       "isBuildCommand": true,
       "showOutput": "always",
-      "args": ["all"],
-      "problemMatcher": {
-        "owner": "cpp",
-        "fileLocation": ["relative", "$workspaceRoot"],
-        "pattern": {
-            "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-            "file": 1,
-            "line": 2,
-            "column": 3,
-            "severity": 4,
-            "message": 5
-        }
-      }
-    },
-    {
-      "taskName": "build debug",
-      "command": "make",
-      "isShellCommand": true,
-      "isBuildCommand": true,
-      "showOutput": "always",
       "args": ["debug"],
       "problemMatcher": {
         "owner": "cpp",
@@ -50,6 +30,26 @@
       "isBuildCommand": true,
       "showOutput": "always",
       "args": ["release"],
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "$workspaceRoot"],
+        "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+        }
+      }
+    },
+    {
+      "taskName": "build all",
+      "command": "make",
+      "isShellCommand": true,
+      "isBuildCommand": true,
+      "showOutput": "always",
+      "args": ["all"],
       "problemMatcher": {
         "owner": "cpp",
         "fileLocation": ["relative", "$workspaceRoot"],

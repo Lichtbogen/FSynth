@@ -53,18 +53,30 @@ void fs_log(int level, const char *format, ...)
   va_list args;
   if ((log_level & LOG_ERR) && (level == LOG_ERR)) {
     fprintf(stderr, "Error: ");
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    fputc('\n', stderr);
+    va_end(args);
   }
   if ((log_level & LOG_WARN) && (level == LOG_WARN)) {
     fprintf(stderr, "Warning: ");
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    fputc('\n', stderr);
+    va_end(args);
   }
   if ((log_level & LOG_INFO) && (level == LOG_INFO)) {
     fprintf(stderr, "Info: ");
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    fputc('\n', stderr);
+    va_end(args);
   }
   if ((log_level & LOG_DEBUG) && (level == LOG_DEBUG)) {
     fprintf(stderr, "Debug: ");
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    fputc('\n', stderr);
+    va_end(args);
   }
-  va_start(args, format);
-  vfprintf(stderr, format, args);
-  fputc('\n', stderr);
-  va_end(args);
 }
