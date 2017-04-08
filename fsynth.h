@@ -41,6 +41,7 @@
 #define FS_OK                   0
 #define FS_ERROR               (1<<31)
 #define FS_WARNING             (1<<30)
+#define FS_EXIT                (1<<29)
 #define FS_INVALID_BUFFER      (1<<0)
 #define FS_INVALID_ARGUMENT    (1<<1)
 #define FS_INVALID_OPERATION   (1<<2)

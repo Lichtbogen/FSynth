@@ -32,7 +32,11 @@
 #include <stdarg.h>
 #include "logging.h"
 
+#ifndef DEBUG
 int log_level = LOG_INFO | LOG_WARN | LOG_ERR;
+#else
+int log_level = LOG_INFO | LOG_WARN | LOG_ERR | LOG_DEBUG;
+#endif
 
 void fs_set_log_level(int level)
 {
