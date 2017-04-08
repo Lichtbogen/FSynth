@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 
 #include "fsynth.h"
 #include "logging.h"
@@ -156,7 +157,7 @@ int shell_cmd_func(int argc, char **argv)
   }
   if (strcmp(argv[0], "saw") == 0) {
     fs_generate_wave_func(sb, FS_WAVE_SAW, freq, amp);
-    fs_log(LOG_DEBUG, "FuncTriangle(%s): freq: %f, level: %f", argv[1], freq, amp);
+    fs_log(LOG_DEBUG, "FuncSaw(%s): freq: %f, level: %f", argv[1], freq, amp);
   }
   return FS_OK;
 }
@@ -176,6 +177,78 @@ int shell_cmd_wave_out(int argc, char **argv)
     fs_log(LOG_DEBUG, "WaveOut(%s): file: %s, bits: %d", argv[1], argv[2], bits);
     fs_normalize_buffer(sb);
     fs_samples_to_wave_file(sb, argv[2], bits, 1);
+  }
+  return FS_OK;
+}
+
+int shell_cmd_info(int argc, char **argv)
+{
+  FSampleBuffer *sb;
+  CHECK_ARGC(1);
+  sb = get_buffer_by_name(argv[1]);
+  if (sb == NULL) return FS_ERROR;
+  printf("sample count:\t%u\n", (unsigned int)sb->sample_count);
+  printf("sample rate:\t%u\n", (unsigned int)sb->sample_rate);
+  printf("buffer size:\t%u byte\n", (unsigned int)sb->buffer_size);
+  printf("buffer length:\t%f\n", fs_get_buffer_duration(sb));
+  return FS_OK;
+}
+
+int shell_cmd_repeat(int argc, char **argv)
+{
+  int times;
+  FSampleBuffer *sb;
+  CHECK_ARGC(3);
+  sb = get_buffer_by_name(argv[1]);
+  if (sb == NULL) return FS_ERROR;
+  times = atoi(argv[2]);
+  fs_repeat_sample_buffer_inplace(sb, times);
+  return FS_OK;
+}
+
+int shell_cmd_scale(int argc, char **argv)
+{
+  double sv;
+  FSampleBuffer *sb;
+  CHECK_ARGC(3);
+  sb = get_buffer_by_name(argv[1]);
+  if (sb == NULL) return FS_ERROR;
+  sv = atof(argv[2]);
+  fs_scale_samples(sb, sv);
+  return FS_OK;
+}
+
+int shell_cmd_attack(int argc, char **argv)
+{
+  double level, time;
+  FSampleBuffer *sb;
+  CHECK_ARGC(4);
+  sb = get_buffer_by_name(argv[1]);
+  if (sb == NULL) return FS_ERROR;
+  time = atof(argv[3]);
+  level = atof(argv[4]);
+  if (strcmp(argv[0], "attack")) {
+    level = fabs(level);
+  }
+  if (strcmp(argv[0], "decay")) {
+    level = -fabs(level);
+  }
+  if (time > fs_get_buffer_duration(sb)) {
+    fs_log(LOG_ERR, "Invalid time value: %f", time);
+    return FS_ERROR;
+  }
+  if (strcmp(argv[2], "linear") == 0) {
+    fs_attack_decay(sb, FS_CURVE_LINEAR, time, level);
+    fs_log(LOG_DEBUG, "Attack linear(%s): time: %f, level:%f", argv[1], time, level);
+  } else if (strcmp(argv[2], "square") == 0) {
+    fs_attack_decay(sb, FS_CURVE_SQUARE, time, level);
+    fs_log(LOG_DEBUG, "Attack square(%s): time: %f, level:%f", argv[1], time, level);
+  } else if (strcmp(argv[2], "tan") == 0) {
+    fs_attack_decay(sb, FS_CURVE_TAN, time, level);
+    fs_log(LOG_DEBUG, "Attack tan(%s): time: %f, level:%f", argv[1], time, level);
+  } else if (strcmp(argv[2], "cubic") == 0) {
+    fs_attack_decay(sb, FS_CURVE_CUBIC, time, level);
+    fs_log(LOG_DEBUG, "Attack cubic(%s): time: %f, level:%f", argv[1], time, level);
   }
   return FS_OK;
 }
@@ -235,6 +308,9 @@ int shell_cmd_help(int argc, char **argv)
     printf("\tadd\tAdds the content of two buffers\n");
     printf("\tsub\tSubtracts the content of two buffers\n");
     printf("\tcat\tConcats the content of two buffers\n");
+    printf("\trepeat\tRepeats the content of an sample buffer n-times\n");
+    printf("\tscale\tScales the samples of a given buffer object\n");
+    printf("\tinfo\tProvides detailed information about the given object\n");
     printf("\nType help [command] to get help for a specific command\n");
   } else {
     if (strcmp(argv[1], "buffer") == 0) {
@@ -283,6 +359,18 @@ int shell_cmd_help(int argc, char **argv)
       printf("and store the combined content back into the first one\n");
       printf("usage: sub <buffer_name_1> <buffer_name_2>\n");
     }
+    if (strcmp(argv[1], "repeat") == 0) {
+      printf("Repeats an sample buffer n-times\n");
+      printf("usage: repeat <buffer_name> <times>\n");
+    }
+    if (strcmp(argv[1], "scale") == 0) {
+      printf("Scales the samples of a given buffer object\n");
+      printf("usage: scale <buffer_name> <scale_value>\n");
+    }
+    if (strcmp(argv[1], "info") == 0) {
+      printf("Provides detailed information about the given object\n");
+      printf("usage: info [object_name]\n");
+    }
   }
   return FS_OK;
 }
@@ -302,6 +390,11 @@ void shell_register(void)
   register_shell_command((FShellCallback*)&shell_cmd_mod, "add");
   register_shell_command((FShellCallback*)&shell_cmd_mod, "sub");
   register_shell_command((FShellCallback*)&shell_cmd_mod, "cat");
+  register_shell_command((FShellCallback*)&shell_cmd_repeat, "repeat");
+  register_shell_command((FShellCallback*)&shell_cmd_scale, "scale");
+  register_shell_command((FShellCallback*)&shell_cmd_info, "info");
+  register_shell_command((FShellCallback*)&shell_cmd_attack, "attack");
+  register_shell_command((FShellCallback*)&shell_cmd_attack, "decay");
 }
 
 void shell_cleanup(void)
