@@ -23,33 +23,29 @@
  */
 
 /**
- * @brief Main module
+ * @brief Command prompt functions
  * @author Pierre Biermann
- * @date 2017-04-05
+ * @date 2017-04-09
  */
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
+#include <termios.h>
+#include <unistd.h>
 
-#include "fsynth.h"
-
-void shell_loop();
-void shell_cleanup();
-void shell_register();
-
-int prompt(const char *prn, char *buffer, int max_len);
-
-int main(int argc, char **argv)
+int prompt(const char *prn, char *buffer, int max_len)
 {
-  //char buf[1024];
-#ifndef DEBUG
-  printf("FSynth: version %s build on %s %s\n", FS_VERSION, __DATE__, __TIME__);
-#else
-  printf("FSynth: version %s DEBUG build on %s %s\n", FS_VERSION, __DATE__, __TIME__);
-#endif
-  printf("GCC: %s\n", __VERSION__);
-  shell_register();
-  shell_loop();
-  //prompt("FS> ", buf, sizeof(buf));
-  shell_cleanup();
+  struct termios tmios;
+
+  /* Get current parameter of stdin*/
+  tcgetattr(STDIN_FILENO, &tmios);
+
+  /* Remove buffering and echoing */
+  tmios.c_lflag &= ~(ICANON | ECHO);
+
+  /* Write back settings of stdin */
+  tcsetattr(STDIN_FILENO, TCSANOW, &tmios);
+
   return 0;
 }

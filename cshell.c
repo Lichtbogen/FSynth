@@ -124,10 +124,10 @@ FSampleBuffer *get_buffer_by_name(char *name)
 {
   FSampleBuffer *sb = NULL;
   struct NodeItem *sbItem;
-  int hv = hash_sdbm(0, argv[1], strlen(argv[1]));
+  int hv = hash_sdbm(0, name, strlen(name));
   sbItem = find_item(&sb_list, hv);
   if (sbItem == NULL) {
-    fs_log(LOG_ERR, "Unknown buffer identifier: %s", argv[1]);
+    fs_log(LOG_ERR, "Unknown buffer identifier: %s", name);
   } else {
     sb = (FSampleBuffer*) sbItem->data;
   }
@@ -145,18 +145,22 @@ int shell_cmd_func(int argc, char **argv)
   amp = atof(argv[3]);
   if (strcmp(argv[0], "sine") == 0) {
     fs_generate_wave_func(sb, FS_WAVE_SINE, freq, amp);
+    fs_print_error(fs_get_error());
     fs_log(LOG_DEBUG, "FuncSine(%s): freq: %f, level: %f", argv[1], freq, amp);
   }
   if (strcmp(argv[0], "rect") == 0) {
     fs_generate_wave_func(sb, FS_WAVE_RECT, freq, amp);
+    fs_print_error(fs_get_error());
     fs_log(LOG_DEBUG, "FuncRectangle(%s): freq: %f, level: %f", argv[1], freq, amp);
   }
   if (strcmp(argv[0], "tri") == 0) {
     fs_generate_wave_func(sb, FS_WAVE_TRIANGLE, freq, amp);
+    fs_print_error(fs_get_error());
     fs_log(LOG_DEBUG, "FuncTriangle(%s): freq: %f, level: %f", argv[1], freq, amp);
   }
   if (strcmp(argv[0], "saw") == 0) {
     fs_generate_wave_func(sb, FS_WAVE_SAW, freq, amp);
+    fs_print_error(fs_get_error());
     fs_log(LOG_DEBUG, "FuncSaw(%s): freq: %f, level: %f", argv[1], freq, amp);
   }
   return FS_OK;
@@ -177,6 +181,7 @@ int shell_cmd_wave_out(int argc, char **argv)
     fs_log(LOG_DEBUG, "WaveOut(%s): file: %s, bits: %d", argv[1], argv[2], bits);
     fs_normalize_buffer(sb);
     fs_samples_to_wave_file(sb, argv[2], bits, 1);
+    fs_print_error(fs_get_error());
   }
   return FS_OK;
 }
@@ -187,9 +192,10 @@ int shell_cmd_info(int argc, char **argv)
   CHECK_ARGC(1);
   sb = get_buffer_by_name(argv[1]);
   if (sb == NULL) return FS_ERROR;
+  printf("buffer address:\t0x%04llX\n", (unsigned long long)sb);
   printf("sample count:\t%u\n", (unsigned int)sb->sample_count);
   printf("sample rate:\t%u\n", (unsigned int)sb->sample_rate);
-  printf("buffer size:\t%u byte\n", (unsigned int)sb->buffer_size);
+  printf("buffer size:\t%llu byte\n", (unsigned long long)sb->buffer_size);
   printf("buffer length:\t%f\n", fs_get_buffer_duration(sb));
   return FS_OK;
 }
@@ -203,6 +209,7 @@ int shell_cmd_repeat(int argc, char **argv)
   if (sb == NULL) return FS_ERROR;
   times = atoi(argv[2]);
   fs_repeat_sample_buffer_inplace(sb, times);
+  fs_print_error(fs_get_error());
   return FS_OK;
 }
 
@@ -215,6 +222,7 @@ int shell_cmd_scale(int argc, char **argv)
   if (sb == NULL) return FS_ERROR;
   sv = atof(argv[2]);
   fs_scale_samples(sb, sv);
+  fs_print_error(fs_get_error());
   return FS_OK;
 }
 
@@ -238,17 +246,21 @@ int shell_cmd_attack(int argc, char **argv)
     return FS_ERROR;
   }
   if (strcmp(argv[2], "linear") == 0) {
-    fs_attack_decay(sb, FS_CURVE_LINEAR, time, level);
     fs_log(LOG_DEBUG, "Attack linear(%s): time: %f, level:%f", argv[1], time, level);
+    fs_attack_decay(sb, FS_CURVE_LINEAR, time, level);
+    fs_print_error(fs_get_error());
   } else if (strcmp(argv[2], "square") == 0) {
-    fs_attack_decay(sb, FS_CURVE_SQUARE, time, level);
     fs_log(LOG_DEBUG, "Attack square(%s): time: %f, level:%f", argv[1], time, level);
+    fs_attack_decay(sb, FS_CURVE_SQUARE, time, level);
+    fs_print_error(fs_get_error());
   } else if (strcmp(argv[2], "tan") == 0) {
-    fs_attack_decay(sb, FS_CURVE_TAN, time, level);
     fs_log(LOG_DEBUG, "Attack tan(%s): time: %f, level:%f", argv[1], time, level);
+    fs_attack_decay(sb, FS_CURVE_TAN, time, level);
+    fs_print_error(fs_get_error());
   } else if (strcmp(argv[2], "cubic") == 0) {
-    fs_attack_decay(sb, FS_CURVE_CUBIC, time, level);
     fs_log(LOG_DEBUG, "Attack cubic(%s): time: %f, level:%f", argv[1], time, level);
+    fs_attack_decay(sb, FS_CURVE_CUBIC, time, level);
+    fs_print_error(fs_get_error());
   }
   return FS_OK;
 }
@@ -263,22 +275,27 @@ int shell_cmd_mod(int argc, char **argv)
     if (strcmp(argv[0], "mult") == 0) {
       fs_log(LOG_DEBUG, "Multiply(%s, %s)", argv[1], argv[2]);
       fs_modulate_buffer(sb1, sb2, FS_MOD_MULT);
+      fs_print_error(fs_get_error());
     }
     if (strcmp(argv[0], "div") == 0) {
       fs_log(LOG_DEBUG, "Divide(%s, %s)", argv[1], argv[2]);
       fs_modulate_buffer(sb1, sb2, FS_MOD_DIV);
+      fs_print_error(fs_get_error());
     }
     if (strcmp(argv[0], "add") == 0) {
       fs_log(LOG_DEBUG, "Add(%s, %s)", argv[1], argv[2]);
       fs_modulate_buffer(sb1, sb2, FS_MOD_ADD);
+      fs_print_error(fs_get_error());
     }
     if (strcmp(argv[0], "sub") == 0) {
       fs_log(LOG_DEBUG, "Subtract(%s, %s)", argv[1], argv[2]);
       fs_modulate_buffer(sb1, sb2, FS_MOD_SUB);
+      fs_print_error(fs_get_error());
     }
     if (strcmp(argv[0], "cat") == 0) {
       fs_log(LOG_DEBUG, "Concat(%s, %s)", argv[1], argv[2]);
       fs_cat_sample_buffers_inplace(sb1, sb2);
+      fs_print_error(fs_get_error());
     }
   } else {
     if (sb1 == NULL) {

@@ -16,7 +16,7 @@ OFLAGS = -O2
 
 ## Object file list
 OBJ = cshell.o errors.o hull.o list.o main.o samples.o sequencer.o wavefmt.o logging.o \
-	
+	prompt.o 
 
 all: $(NAME)
 
@@ -56,6 +56,9 @@ wavefmt.o: wavefmt.c
 
 logging.o: logging.c
 	$(CC) $(CFLAGS) -c logging.c
+
+prompt.o: prompt.c
+	$(CC) $(CFLAGS) -c prompt.c
 
 clean:
 	rm $(OBJ)
