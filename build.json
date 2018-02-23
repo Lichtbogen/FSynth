@@ -1,5 +1,23 @@
 {
-	"name": "fsynth",
-	"lflags": "-lm",
-	"compiler": "gcc"
+    "cflags": "-Wall",
+    "compiler": "gcc",
+    "dflags": "-DDEBUG",
+    "libs": [
+        "m",
+        "readline"
+    ],
+    "name": "fsynth",
+    "oflags": "-DNDEBUG -O2",
+    "source": [
+        "./src/cshell.c",
+        "./src/errors.c",
+        "./src/hull.c",
+        "./src/list.c",
+        "./src/logging.c",
+        "./src/main.c",
+        "./src/prompt.c",
+        "./src/samples.c",
+        "./src/sequencer.c",
+        "./src/wavefmt.c"
+    ]
 }
