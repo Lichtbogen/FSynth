@@ -256,6 +256,21 @@ int shell_cmd_attack(int argc, char **argv)
   return FS_OK;
 }
 
+int shell_cmd_sustain(int argc, char **argv)
+{
+  double time;
+  FSampleBuffer *sb;
+  CHECK_ARGC(2);
+  sb = get_buffer_by_name(argv[1]);
+  if (sb != NULL) {
+    time = atof(argv[2]);
+    fs_sustain(sb, time);
+    fs_log(LOG_DEBUG, "Sustain(%s): time: %f", argv[1], time);
+    fs_print_error(fs_get_error());
+  }
+  return FS_OK;
+}
+
 int shell_cmd_mod(int argc, char **argv)
 {
   FSampleBuffer *sb1, *sb2;
@@ -319,6 +334,9 @@ int shell_cmd_help(int argc, char **argv)
     printf("\trepeat\tRepeats the content of an sample buffer n-times\n");
     printf("\tscale\tScales the samples of a given buffer object\n");
     printf("\tinfo\tProvides detailed information about the given object\n");
+    printf("\tattack\tAdds an 'attack' hull curve to the output buffer\n");
+    printf("\tdecay\tAdds an 'decay' hull curve to the output buffer\n");
+    printf("\tsustain\tAdds an 'sustain' hull curve to the output buffer\n");
     printf("\nType help [command] to get help for a specific command\n");
   } else {
     if (strcmp(argv[1], "buffer") == 0) {
@@ -379,6 +397,18 @@ int shell_cmd_help(int argc, char **argv)
       printf("Provides detailed information about the given object\n");
       printf("usage: info [object_name]\n");
     }
+    if (strcmp(argv[1], "attack") == 0) {
+      printf("Adds an 'attack' hull curve to the given buffer\n");
+      printf("usage: attck <buffer_name> <hull_type{linear|tan|cubic> <time> <level>\n");
+    }
+    if (strcmp(argv[1], "decay") == 0) {
+      printf("Adds an 'decay' hull curve to the given buffer\n");
+      printf("usage: attck <buffer_name> <hull_type{linear|tan|cubic}> <time> <level>\n");
+    }
+    if (strcmp(argv[1], "sustain") == 0) {
+      printf("Adds an 'sustain' hull curve to the given buffer\n");
+      printf("usage: attck <buffer_name> <time>\n");
+    }
   }
   return FS_OK;
 }
@@ -403,6 +433,7 @@ void shell_register(void)
   register_shell_command((FShellCallback*)&shell_cmd_info, "info");
   register_shell_command((FShellCallback*)&shell_cmd_attack, "attack");
   register_shell_command((FShellCallback*)&shell_cmd_attack, "decay");
+  register_shell_command((FShellCallback*)&shell_cmd_sustain, "sustain");
 }
 
 void shell_cleanup(void)
