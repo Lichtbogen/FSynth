@@ -42,6 +42,9 @@ include_directories(${PROJECT_BINARY_DIR})
 # Build targets
 add_library(${PROJECT_LIBRARY_NAME} ${LIBRARY_SOURCE})
 add_executable(${PROJECT_EXE_NAME} ${PROGRAM_SOURCE})
+if (${CMAKE_BUILD_TYPE} MATCHES "Release")
+  set(PROGRAM_EXT_LIBS ${PROGRAM_EXT_LIBS} "-s")
+endif(${CMAKE_BUILD_TYPE} MATCHES "Release")
 target_link_libraries(${PROJECT_EXE_NAME} ${PROGRAM_EXT_LIBS} ${PROJECT_LIBRARY_NAME})
 
 # Add install targets
