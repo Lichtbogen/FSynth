@@ -17,9 +17,6 @@
 #include <ctype.h>
 #include <math.h>
 
-#include <readline/readline.h>
-#include <readline/history.h>
-
 #include "fsynth.h"
 #include "logging.h"
 #include "list.h"
@@ -445,14 +442,4 @@ void shell_cleanup(void)
   }
   delete_list(&sb_list);
   delete_list(&cb_list);
-}
-
-void shell_loop(void)
-{
-  char *input;
-  do {
-    input = readline("fs>");
-    add_history(input);
-    if (shell_pchar(input) & FS_EXIT) break;
-  } while (1);
 }

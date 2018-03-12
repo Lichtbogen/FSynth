@@ -14,7 +14,9 @@
 #ifndef _FSYNTH_H_
 #define _FSYNTH_H_
 
-#define FS_VERSION             "0.0.2.3"
+#ifndef _FS_CONFIG_
+#include "fs_config.h"
+#endif
 
 #ifndef _STDINT_H_
 #include <stdint.h>
